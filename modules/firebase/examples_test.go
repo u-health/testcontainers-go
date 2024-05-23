@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
+	"path/filepath"
 
-	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/firebase"
 )
 
@@ -16,8 +15,7 @@ func ExampleRunContainer() {
 
 	firebaseContainer, err := firebase.RunContainer(
 		ctx,
-		testcontainers.WithImage(firebase.IMAGE_NAME),
-		firebase.WithRoot(fmt.Sprintf("%s/firebase", os.Getenv("PWD"))),
+		firebase.WithRoot(filepath.Join(BasePath(), "firebase")),
 	)
 	if err != nil {
 		log.Fatalf("failed to start container: %s", err)

@@ -15,22 +15,9 @@ type FirebaseContainer struct {
 	testcontainers.Container
 }
 
-const (
-	UI_PORT        = "4000/tcp"
-	HUB_PORT       = "4400/tcp"
-	LOGGING_PORT   = "4600/tcp"
-	FUNCTIONS_PORT = "5001/tcp"
-	FIRESTORE_PORT = "8080/tcp"
-	PUBSUB_PORT    = "8085/tcp"
-	DATABASE_PORT  = "9000/tcp"
-	AUTH_PORT      = "9099/tcp"
-	STORAGE_PORT   = "9199/tcp"
-	HOSTING_PORT   = "6000/tcp"
-)
+const defaultImageName = "ghcr.io/u-health/docker-firebase-emulator:13.6.0"
 
-const IMAGE_NAME = "ghcr.io/u-health/docker-firebase-emulator:13.6.0"
-
-// WithRoot changes the default firebase root path on local machine
+// WithRoot sets the directory which is copied to the destination container as firebase root
 func WithRoot(rootPath string) testcontainers.CustomizeRequestOption {
 	return func(req *testcontainers.GenericContainerRequest) error {
 		if !strings.HasSuffix(rootPath, "/firebase") {
@@ -45,7 +32,7 @@ func WithRoot(rootPath string) testcontainers.CustomizeRequestOption {
 	}
 }
 
-// WithData names the data directory in firebase mount
+// WithData names the data directory in firebase root
 func WithData(dataPath string) testcontainers.CustomizeRequestOption {
 	return func(req *testcontainers.GenericContainerRequest) error {
 		req.Env["DATA_DIRECTORY"] = dataPath
@@ -80,7 +67,7 @@ func WithCache() testcontainers.CustomizeRequestOption {
 // RunContainer creates an instance of the Firebase container type
 func RunContainer(ctx context.Context, opts ...testcontainers.ContainerCustomizer) (*FirebaseContainer, error) {
 	req := testcontainers.ContainerRequest{
-		Image: IMAGE_NAME,
+		Image: defaultImageName,
 		ExposedPorts: []string{
 			UI_PORT,
 			HUB_PORT,
@@ -96,7 +83,7 @@ func RunContainer(ctx context.Context, opts ...testcontainers.ContainerCustomize
 
 		Env: map[string]string{},
 		WaitingFor: wait.ForAll(
-			wait.ForHTTP("/").WithPort("4000").WithStartupTimeout(3 * time.Minute),
+			wait.ForHTTP("/").WithPort(UI_PORT).WithStartupTimeout(3 * time.Minute),
 		),
 	}
 
@@ -117,28 +104,4 @@ func RunContainer(ctx context.Context, opts ...testcontainers.ContainerCustomize
 	}
 
 	return &FirebaseContainer{Container: container}, nil
-}
-
-func (c *FirebaseContainer) FirestoreConnectionString(ctx context.Context) (string, error) {
-	host, err := c.Host(ctx)
-	if err != nil {
-		return "", err
-	}
-	port, err := c.MappedPort(ctx, FIRESTORE_PORT)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s:%s", host, port.Port()), nil
-}
-
-func (c *FirebaseContainer) AuthConnectionString(ctx context.Context) (string, error) {
-	host, err := c.Host(ctx)
-	if err != nil {
-		return "", err
-	}
-	port, err := c.MappedPort(ctx, AUTH_PORT)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s:%s", host, port.Port()), nil
 }

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/firebase"
 )
 
@@ -20,8 +20,7 @@ func TestFirebase(t *testing.T) {
 
 	container, err := firebase.RunContainer(
 		ctx,
-		testcontainers.WithImage(firebase.IMAGE_NAME),
-		firebase.WithRoot(fmt.Sprintf("%s/firebase", os.Getenv("PWD"))),
+		firebase.WithRoot(filepath.Join(BasePath(), "firebase")),
 		firebase.WithCache(),
 	)
 	if err != nil {
