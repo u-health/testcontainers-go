@@ -3,15 +3,17 @@ package firebase_test
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/firebase"
 )
 
 func TestFirebase(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(3*time.Minute))
 
 	thing := fmt.Sprintf("%s/test", os.Getenv("PWD"))
 	fmt.Println(thing)
@@ -31,7 +33,15 @@ func TestFirebase(t *testing.T) {
 		if err := container.Terminate(ctx); err != nil {
 			t.Fatalf("failed to terminate container: %s", err)
 		}
+		cancel()
 	})
 
 	// perform assertions
+	firestoreUrl, err := container.FirestoreConnectionString(ctx)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, firestoreUrl)
+
+	authUrl, err := container.AuthConnectionString(ctx)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, authUrl)
 }

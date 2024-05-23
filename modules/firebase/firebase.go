@@ -7,6 +7,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"strings"
+	"time"
 )
 
 // FirebaseContainer represents the Firebase container type used in the module
@@ -95,7 +96,7 @@ func RunContainer(ctx context.Context, opts ...testcontainers.ContainerCustomize
 
 		Env: map[string]string{},
 		WaitingFor: wait.ForAll(
-			wait.ForHTTP("/").WithPort("4000"),
+			wait.ForHTTP("/").WithPort("4000").WithStartupTimeout(3 * time.Minute),
 		),
 	}
 
@@ -116,4 +117,28 @@ func RunContainer(ctx context.Context, opts ...testcontainers.ContainerCustomize
 	}
 
 	return &FirebaseContainer{Container: container}, nil
+}
+
+func (c *FirebaseContainer) FirestoreConnectionString(ctx context.Context) (string, error) {
+	host, err := c.Host(ctx)
+	if err != nil {
+		return "", err
+	}
+	port, err := c.MappedPort(ctx, FIRESTORE_PORT)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s:%s", host, port.Port()), nil
+}
+
+func (c *FirebaseContainer) AuthConnectionString(ctx context.Context) (string, error) {
+	host, err := c.Host(ctx)
+	if err != nil {
+		return "", err
+	}
+	port, err := c.MappedPort(ctx, AUTH_PORT)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s:%s", host, port.Port()), nil
 }
