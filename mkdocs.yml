@@ -74,6 +74,7 @@ nav:
         - modules/couchbase.md
         - modules/dolt.md
         - modules/elasticsearch.md
+        - modules/firebase.md
         - modules/gcloud.md
         - modules/inbucket.md
         - modules/influxdb.md
