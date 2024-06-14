@@ -204,11 +204,10 @@ func (c *DockerContainer) MappedPort(ctx context.Context, port nat.Port) (nat.Po
 			return nat.NewPort(k.Proto(), p[0].HostPort)
 		}
 
-		select {
-		case <-time.After(time.Duration(i*100) * time.Millisecond):
-			continue
-		case <-ctx.Done():
-			break
+		// This forces re-fetch on container state.
+		_, err = c.State(ctx)
+		if err != nil {
+			return "", err
 		}
 	}
 	return "", errors.New("port not found")
