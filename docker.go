@@ -205,7 +205,7 @@ func (c *DockerContainer) MappedPort(ctx context.Context, port nat.Port) (nat.Po
 		}
 
 		select {
-		case <-time.After(10 * time.Millisecond):
+		case <-time.After(time.Duration(i*100) * time.Millisecond):
 			continue
 		case <-ctx.Done():
 			break
