@@ -179,29 +179,31 @@ func (c *DockerContainer) Inspect(ctx context.Context) (*types.ContainerJSON, er
 
 // MappedPort gets externally mapped port for a container port
 func (c *DockerContainer) MappedPort(ctx context.Context, port nat.Port) (nat.Port, error) {
-	inspect, err := c.Inspect(ctx)
-	if err != nil {
-		return "", err
-	}
-	if inspect.ContainerJSONBase.HostConfig.NetworkMode == "host" {
-		return port, nil
-	}
-
-	ports := inspect.NetworkSettings.Ports
-
-	for k, p := range ports {
-		if k.Port() != port.Port() {
-			continue
+	// Because: https://github.com/moby/moby/issues/42860
+	for i := 0; i < 3; i++ {
+		inspect, err := c.Inspect(ctx)
+		if err != nil {
+			return "", err
 		}
-		if port.Proto() != "" && k.Proto() != port.Proto() {
-			continue
+		if inspect.ContainerJSONBase.HostConfig.NetworkMode == "host" {
+			return port, nil
 		}
-		if len(p) == 0 {
-			continue
-		}
-		return nat.NewPort(k.Proto(), p[0].HostPort)
-	}
 
+		ports := inspect.NetworkSettings.Ports
+
+		for k, p := range ports {
+			if k.Port() != port.Port() {
+				continue
+			}
+			if port.Proto() != "" && k.Proto() != port.Proto() {
+				continue
+			}
+			if len(p) == 0 {
+				continue
+			}
+			return nat.NewPort(k.Proto(), p[0].HostPort)
+		}
+	}
 	return "", errors.New("port not found")
 }
 
